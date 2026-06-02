@@ -1,12 +1,12 @@
-## Why I Built This
-
-I started this project after a real grocery delivery experience where I received items that did not match my freshness expectations, such as short-expiry dairy and produce that was too ripe. I realized that customers are not always available to message the picker while the order is being fulfilled, so I wanted to explore how grocery platforms could capture freshness and substitution preferences before fulfillment begins.
-
 # Grocery Preference Layer: Retail-Agnostic Freshness Intelligence for Grocery Fulfillment
 
 Grocery Preference Layer is a full-stack retail technology prototype that helps grocery subscription and delivery platforms capture customer freshness, ripeness, shelf-life, and substitution preferences before fulfillment begins.
 
 The product is designed as a retailer-agnostic preference layer that could support grocery delivery subscriptions, warehouse clubs, marketplace shoppers, or in-house store fulfillment teams.
+
+## Why I Built This
+
+I started this project after a real grocery delivery experience where I received items that did not match my freshness expectations, such as short-expiry dairy and produce that was too ripe. I realized that customers are not always available to message the picker while the order is being fulfilled, so I wanted to explore how grocery platforms could capture freshness and substitution preferences before fulfillment begins.
 
 ## Product Summary
 
