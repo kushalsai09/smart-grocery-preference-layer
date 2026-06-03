@@ -15,4 +15,5 @@ dist/
 .vite/
 
 .env
+.sfdx/
 .DS_Store
