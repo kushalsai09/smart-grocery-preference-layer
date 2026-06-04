@@ -1,18 +1,18 @@
 # Grocery Preference Layer: Retail-Agnostic Freshness Intelligence for Grocery Fulfillment
 
-Grocery Preference Layer is a full-stack retail technology prototype inspired by a real grocery delivery experience: receiving items that technically matched the order, but did not match freshness expectations.
+Grocery Preference Layer is a full-stack retail technology project based on a real grocery delivery problem: items can match the order on paper, but still miss the customer's freshness expectations.
 
-The core idea is simple: customers are not always available to message a picker while an order is being fulfilled, so the product captures freshness, ripeness, shelf-life, and substitution preferences before fulfillment starts. It is designed as a retailer-agnostic preference layer for grocery delivery subscriptions, warehouse clubs, marketplace shoppers, or in-house store fulfillment teams.
+The core idea is simple: customers are not always available to message a picker while an order is being fulfilled. This app lets them set freshness, ripeness, shelf-life, and substitution preferences before the store starts picking.
 
 ## Why I Built This
 
-I built this project after experiencing a common grocery delivery problem firsthand. Some delivered items did not match what I expected in terms of freshness or remaining shelf life, and by the time the order was being picked, there was no reliable way to communicate every preference in real time.
+I built this project after receiving grocery delivery items that did not match what I expected in terms of freshness or remaining shelf life. The items were not necessarily wrong, but they were not what I would have picked myself.
 
-That experience made the product opportunity clear: grocery platforms should not depend on customers being available at the exact moment a picker has a question. A better system would let customers define freshness, ripeness, shelf-life, and substitution preferences ahead of time, then turn those preferences into clear guidance for fulfillment teams.
+That made the gap clear: grocery apps often rely on real-time messages between the customer and picker, but customers are not always available at that exact moment. I wanted to explore what it would look like to capture those preferences earlier and turn them into clear picking guidance.
 
 ## Product Summary
 
-Customers often care deeply about freshness, but they may not be available when a store picker is actively shopping their order. This prototype lets customers define preferences ahead of time, gives fulfillment teams actionable picking guidance, and gives product managers a demonstration dashboard for satisfaction and business-impact insights.
+Customers often care deeply about freshness, but they may not be available when a store picker is actively shopping their order. This prototype lets customers define preferences ahead of time, gives fulfillment teams practical picking guidance, and gives product managers a simple insights view.
 
 ## Problem Statement
 
@@ -27,7 +27,7 @@ These issues can lead to refunds, complaints, food waste, lower satisfaction, an
 
 ## Solution Overview
 
-Grocery Preference Layer captures customer expectations before the order reaches fulfillment.
+The app captures customer expectations before the order reaches fulfillment.
 
 The system allows customers to save:
 
@@ -37,19 +37,19 @@ The system allows customers to save:
 - Substitution rules
 - Grocery profile defaults
 
-Store pickers then receive clear alerts and fulfillment workflow states. Product managers can use the Product Manager Dashboard to demonstrate how preference-aware fulfillment could improve customer satisfaction, reduce complaints, and support retention.
+Store pickers then receive clear alerts and fulfillment workflow states. Product managers can use the dashboard to understand where freshness preferences are being used and where they may reduce complaints.
 
 ## Key Features
 
 - **Customer Freshness Preferences**: Save minimum shelf-life expectations for dairy, meat, bread/wheat, bakery, and produce.
 - **Produce Ripeness Preferences**: Configure ripeness for bananas and avocados.
 - **Substitution Preferences**: Choose Allow replacement, Ask before replacing, or Do not replace.
-- **Persisted Cart**: Cart items are stored in the FastAPI + SQLite backend.
+- **Cart**: Cart items are stored in the FastAPI + SQLite backend.
 - **Order Review**: Review selected items, preferences, estimated total, retail partner, and grocery profile.
 - **Store Picker Dashboard**: Fulfillment team view with customer alerts, freshness confidence, and workflow states.
 - **Shelf-Life Engine**: Python rule-based engine returns `PASS`, `WARNING`, or `IMPOSSIBLE`.
-- **Product Manager Dashboard**: Executive-style demo mode with KPI cards and visual charts.
-- **Business Impact Metrics**: Modeled estimates for complaint reduction, food waste reduction, refund reduction, and retention lift.
+- **Product Manager Dashboard**: Demo mode with KPI cards and visual charts.
+- **Impact Metrics**: Modeled estimates for complaint reduction, food waste reduction, refund reduction, and retention lift.
 
 ## Tech Stack
 
@@ -61,7 +61,7 @@ Store pickers then receive clear alerts and fulfillment workflow states. Product
 ## Architecture Overview
 
 ```text
-smart-grocery-preference-assistant/
+smart-grocery-preference-layer/
   backend/
     app/
       database.py             # SQLite schema and connection setup
@@ -93,11 +93,11 @@ smart-grocery-preference-assistant/
 
 - Customer shopping and preference workflow
 - Store Picker fulfillment workflow
-- Product Manager demo dashboard
+- Product Manager dashboard
 - Cart and order review UI
-- Presentation-ready charts and cards
+- Charts and dashboard cards
 
-## Real vs Mocked Functionality
+## Real vs Demo Functionality
 
 ### Real Functionality
 
@@ -114,7 +114,7 @@ smart-grocery-preference-assistant/
 - Freshness confidence mapping
 - Order review API
 
-### Mocked / Demo-Mode Functionality
+### Demo-Only Functionality
 
 - Retailer integrations
 - Real inventory availability
@@ -174,7 +174,7 @@ http://localhost:5173
 Use Customer View to:
 
 - Browse grocery products
-- Add products to the persisted cart
+- Add products to the cart
 - Set freshness preferences
 - Set ripeness preferences
 - Set substitution preferences
@@ -199,7 +199,7 @@ Use Product Manager View to:
 
 - Present executive KPIs
 - Review retail insights
-- Demonstrate business impact
+- Review impact estimates
 - Show visual charts for preference adoption, freshness compliance, and fulfillment success
 
 ## Shelf-Life Engine
@@ -243,8 +243,8 @@ IMPOSSIBLE -> Low
 - Add deployment configuration
 - Add CI/CD checks
 
-## Portfolio Positioning
+## What This Project Shows
 
-This project is meant to show how I approach product development from a real customer pain point, not just from a technical feature list. It starts with a familiar grocery delivery frustration, translates that experience into a product opportunity, and then connects the customer workflow to fulfillment operations and product-management metrics.
+This project shows how I approach product development from a real customer pain point, not just from a technical feature list. It starts with a familiar grocery delivery frustration and connects the customer workflow to fulfillment operations and product-management metrics.
 
-For recruiters, it demonstrates full-stack execution with React, FastAPI, SQLite, and a rule-based Python engine. For product managers and retail technology teams, it demonstrates how a focused preference layer could reduce ambiguity during fulfillment, improve customer trust, and create a clearer story around freshness compliance, substitutions, and satisfaction.
+For recruiters, it demonstrates full-stack execution with React, FastAPI, SQLite, and a rule-based Python engine. For product managers and retail technology teams, it shows how saved grocery preferences could reduce ambiguity during fulfillment and make freshness expectations easier to act on.

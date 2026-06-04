@@ -7,6 +7,7 @@ import {
   ClipboardCheck,
   ClipboardList,
   PackageCheck,
+  Minus,
   Plus,
   RefreshCw,
   ShoppingCart,
@@ -14,7 +15,6 @@ import {
   Sparkles,
   Store,
   UserRound,
-  X,
 } from "lucide-react";
 
 import "./styles.css";
@@ -43,12 +43,12 @@ const groceryProfiles = [
 const productVisuals = {
   Milk: { accent: "dairy", shortName: "Milk" },
   "Greek Yogurt": { accent: "dairy", shortName: "Yogurt" },
-  Chicken: { accent: "meat", shortName: "Chkn" },
+  Chicken: { accent: "meat", shortName: "Chicken" },
   Eggs: { accent: "dairy", shortName: "Eggs" },
   Bread: { accent: "bread", shortName: "Bread" },
   Muffins: { accent: "bakery", shortName: "Muffin" },
-  Bananas: { accent: "produce", shortName: "Bnna" },
-  Avocados: { accent: "produce", shortName: "Avoc" },
+  Bananas: { accent: "produce", shortName: "Banana" },
+  Avocados: { accent: "produce", shortName: "Avocado" },
 };
 
 const statusClass = {
@@ -202,8 +202,15 @@ function App() {
     await refreshCustomerData(selectedCustomerId);
   }
 
-  async function removeFromCart(cartItemId) {
-    await fetchJson(`/api/cart/items/${cartItemId}`, { method: "DELETE" });
+  async function updateCartQuantity(item, nextQuantity) {
+    if (nextQuantity <= 0) {
+      await fetchJson(`/api/cart/items/${item.id}`, { method: "DELETE" });
+    } else {
+      await fetchJson(`/api/cart/items/${item.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ quantity: nextQuantity }),
+      });
+    }
     await refreshCustomerData(selectedCustomerId);
   }
 
@@ -310,8 +317,8 @@ function App() {
           <div className="brand-lockup">
             <Store />
             <div>
-              <strong>Retail Prototype V3</strong>
-              <span>Product Manager Demonstration Mode</span>
+              <strong>Grocery Preference Layer</strong>
+              <span>Demo Mode</span>
             </div>
           </div>
           <div className="topbar-controls">
@@ -348,17 +355,17 @@ function App() {
 
         <div className="hero-content">
           <div>
-            <p className="eyebrow">Retailer-agnostic grocery fulfillment</p>
+            <p className="eyebrow">Grocery fulfillment preferences</p>
             <h1>Show how grocery preference data improves fulfillment outcomes.</h1>
             <p className="subtitle">
-              A presentation-ready layer for customer preferences, store picker execution, and product leadership metrics.
+              A practical way to capture customer preferences, guide store picking, and review fulfillment insights.
             </p>
             <div className="hero-actions">
               <button className="primary-button" onClick={() => setView("shop")}>
                 Browse groceries
               </button>
               <button className="secondary-button" onClick={() => selectDemoMode("Product Manager View")}>
-                Product manager demo
+                View insights
               </button>
             </div>
           </div>
@@ -439,7 +446,7 @@ function App() {
             setView("product-manager");
           }}
         >
-          Executive Dashboard
+          Insights Dashboard
         </button>
       </section>
 
@@ -450,9 +457,9 @@ function App() {
           cart={cart}
           products={products}
           productsById={productsById}
-          removeFromCart={removeFromCart}
           setPreferenceFromProduct={setPreferenceFromProduct}
           retailPartner={orderContext.retail_partner}
+          updateCartQuantity={updateCartQuantity}
         />
       )}
 
@@ -506,9 +513,9 @@ function ShoppingHome({
   cart,
   products,
   productsById,
-  removeFromCart,
   retailPartner,
   setPreferenceFromProduct,
+  updateCartQuantity,
 }) {
   return (
     <div className="shopping-layout">
@@ -535,8 +542,8 @@ function ShoppingHome({
       <CartPanel
         cart={cart}
         productsById={productsById}
-        removeFromCart={removeFromCart}
         retailPartner={retailPartner}
+        updateCartQuantity={updateCartQuantity}
       />
     </div>
   );
@@ -588,22 +595,22 @@ function CartSummary({ count, total }) {
       <div>
         <span>{count} items</span>
         <strong>${total.toFixed(2)}</strong>
-        <small>Backend cart saved for order review and fulfillment.</small>
+        <small>Cart saved for order review and fulfillment.</small>
       </div>
     </aside>
   );
 }
 
-function CartPanel({ cart, productsById, removeFromCart, retailPartner }) {
+function CartPanel({ cart, productsById, retailPartner, updateCartQuantity }) {
   return (
     <aside className="cart-panel">
       <div className="panel-title">
         <ShoppingCart />
-        <h2>Persisted Cart</h2>
+        <h2>Cart</h2>
       </div>
       <p className="cart-context">Prepared for {retailPartner} fulfillment.</p>
       {cart.items.length === 0 ? (
-        <p className="empty-state">Add groceries to persist them in the backend cart.</p>
+        <p className="empty-state">Add groceries to save them for order review.</p>
       ) : (
         <div className="cart-list">
           {cart.items.map((item) => {
@@ -619,9 +626,21 @@ function CartPanel({ cart, productsById, removeFromCart, retailPartner }) {
                     <small>Freshness confidence: {item.freshness_confidence}</small>
                   )}
                 </div>
-                <button aria-label={`Remove ${product?.name}`} onClick={() => removeFromCart(item.id)}>
-                  <X size={16} />
-                </button>
+                <div className="quantity-controls" aria-label={`${product?.name} quantity controls`}>
+                  <button
+                    aria-label={`Decrease ${product?.name} quantity`}
+                    onClick={() => updateCartQuantity(item, item.quantity - 1)}
+                  >
+                    <Minus size={16} />
+                  </button>
+                  <strong>{item.quantity}</strong>
+                  <button
+                    aria-label={`Increase ${product?.name} quantity`}
+                    onClick={() => updateCartQuantity(item, item.quantity + 1)}
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
               </article>
             );
           })}
@@ -1009,7 +1028,7 @@ function ProductManagerDashboard({ metrics, retailPartner }) {
         <div className="section-heading compact">
           <div>
             <p className="eyebrow">Product Manager View</p>
-            <h2>Executive Dashboard</h2>
+            <h2>Insights Dashboard</h2>
           </div>
           <span>{retailPartner}</span>
         </div>
@@ -1027,7 +1046,7 @@ function ProductManagerDashboard({ metrics, retailPartner }) {
       <section className="panel insights-panel">
         <div className="panel-title">
           <ClipboardCheck />
-          <h2>Retail Insights Panel</h2>
+          <h2>Retail Insights</h2>
         </div>
         <div className="insight-list">
           {metrics.insights.map((insight) => (
@@ -1043,7 +1062,7 @@ function ProductManagerDashboard({ metrics, retailPartner }) {
       <section className="panel business-panel">
         <div className="panel-title">
           <Sparkles />
-          <h2>Business Impact</h2>
+          <h2>Impact Summary</h2>
         </div>
         <div className="impact-grid">
           {metrics.impact.map((impact) => (
@@ -1058,7 +1077,7 @@ function ProductManagerDashboard({ metrics, retailPartner }) {
       <section className="panel wide-panel">
         <div className="section-heading compact">
           <div>
-            <p className="eyebrow">Visual charts</p>
+            <p className="eyebrow">Charts</p>
             <h2>Operational Performance</h2>
           </div>
           <span>Demo data</span>

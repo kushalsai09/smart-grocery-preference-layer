@@ -597,6 +597,24 @@ textarea {
   min-width: 34px;
 }
 
+.quantity-controls {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.quantity-controls strong {
+  color: #17212b;
+  min-width: 20px;
+  text-align: center;
+}
+
+.cart-item .quantity-controls button {
+  background: #f6f8f3;
+  border-color: #c8d1c0;
+  color: #2f6d48;
+}
+
 .cart-total {
   align-items: center;
   border-top: 1px solid #d8dfd0;
