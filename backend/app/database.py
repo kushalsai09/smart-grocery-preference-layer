@@ -26,6 +26,7 @@ def init_schema() -> None:
                 category TEXT NOT NULL,
                 sample_price REAL NOT NULL DEFAULT 0,
                 package_size TEXT NOT NULL DEFAULT 'each',
+                image_url TEXT NOT NULL DEFAULT '',
                 typical_shelf_life_days INTEGER NOT NULL,
                 max_realistic_shelf_life_days INTEGER NOT NULL,
                 guidance TEXT NOT NULL
@@ -65,6 +66,7 @@ def init_schema() -> None:
         )
         ensure_column(db, "products", "sample_price", "REAL NOT NULL DEFAULT 0")
         ensure_column(db, "products", "package_size", "TEXT NOT NULL DEFAULT 'each'")
+        ensure_column(db, "products", "image_url", "TEXT NOT NULL DEFAULT ''")
         ensure_column(
             db,
             "preferences",

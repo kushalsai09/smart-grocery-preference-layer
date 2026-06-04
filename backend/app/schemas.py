@@ -12,6 +12,7 @@ class ProductOut(BaseModel):
     category: str
     sample_price: float
     package_size: str
+    image_url: str
     typical_shelf_life_days: int
     max_realistic_shelf_life_days: int
     guidance: str

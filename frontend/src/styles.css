@@ -390,10 +390,28 @@ textarea {
   background: #f8faf5;
   border: 1px solid #d8dfd0;
   border-radius: 8px;
+  color: #26333b;
   display: flex;
   gap: 10px;
   min-height: 76px;
   padding: 12px;
+  text-align: left;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+  width: 100%;
+}
+
+.category-tile:hover,
+.category-tile.active {
+  border-color: #2f6d48;
+  box-shadow: 0 10px 22px rgba(31, 41, 51, 0.07);
+  transform: translateY(-1px);
+}
+
+.category-tile.active {
+  background: #eef6e9;
 }
 
 .category-tile strong,
@@ -457,21 +475,29 @@ textarea {
 
 .product-media::before,
 .product-media::after {
-  content: "";
-  position: absolute;
+  display: none;
 }
 
-.product-media::before {
-  border-radius: 999px;
-  height: 84px;
-  width: 84px;
+.product-media img {
+  height: 100%;
+  inset: 0;
+  object-fit: cover;
+  position: absolute;
+  transform: scale(1.01);
+  transition: transform 180ms ease;
+  width: 100%;
+}
+
+.product-card:hover .product-media img {
+  transform: scale(1.05);
 }
 
 .product-media::after {
-  border-radius: 8px;
-  bottom: 18px;
-  height: 20px;
-  width: 110px;
+  background: linear-gradient(180deg, transparent 40%, rgba(23, 33, 43, 0.6));
+  content: "";
+  display: block;
+  inset: 0;
+  position: absolute;
 }
 
 .product-media span {
@@ -479,21 +505,18 @@ textarea {
   border: 1px solid rgba(255, 255, 255, 0.96);
   border-radius: 999px;
   color: #17212b;
+  bottom: 10px;
   font-weight: 950;
+  left: 10px;
   padding: 8px 12px;
-  position: relative;
+  position: absolute;
+  right: 10px;
+  text-align: center;
   z-index: 1;
 }
 
 .product-media small {
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 999px;
-  color: #3f4c55;
-  font-size: 0.76rem;
-  font-weight: 900;
-  padding: 4px 9px;
-  position: relative;
-  z-index: 1;
+  display: none;
 }
 
 .media-icon {
@@ -501,17 +524,14 @@ textarea {
   text-align: center;
 }
 
+.category-icon.default,
+.product-media.default {
+  background: #e7ebef;
+}
+
 .category-icon.dairy,
 .product-media.dairy {
   background: #dcecf7;
-}
-
-.product-media.dairy::before {
-  background: #ffffff;
-}
-
-.product-media.dairy::after {
-  background: #9fc7df;
 }
 
 .category-icon.meat,
@@ -519,12 +539,14 @@ textarea {
   background: #f6ded9;
 }
 
-.product-media.meat::before {
-  background: #d96858;
+.category-icon.vegetable,
+.product-media.vegetable {
+  background: #e6f1dc;
 }
 
-.product-media.meat::after {
-  background: #a9362d;
+.category-icon.leafy,
+.product-media.leafy {
+  background: #d9ecdf;
 }
 
 .category-icon.bread,
@@ -534,27 +556,9 @@ textarea {
   background: #f8e5bc;
 }
 
-.product-media.bread::before,
-.product-media.bakery::before {
-  background: #d89243;
-}
-
-.product-media.bread::after,
-.product-media.bakery::after {
-  background: #9b5d25;
-}
-
 .category-icon.produce,
 .product-media.produce {
   background: #e3efd6;
-}
-
-.product-media.produce::before {
-  background: #86b85e;
-}
-
-.product-media.produce::after {
-  background: #3d7a40;
 }
 
 .product-copy {

@@ -41,22 +41,48 @@ const groceryProfiles = [
 ];
 
 const categoryVisuals = {
-  Dairy: { accent: "dairy", icon: "Milk", label: "Cold case" },
-  Meat: { accent: "meat", icon: "Meat", label: "Fresh cut" },
-  "Bread/Wheat": { accent: "bread", icon: "Bread", label: "Bakery aisle" },
-  Bakery: { accent: "bakery", icon: "Muffin", label: "Baked goods" },
-  Produce: { accent: "produce", icon: "Leaf", label: "Fresh produce" },
-};
-
-const productVisuals = {
-  Milk: { displayName: "Milk" },
-  "Greek Yogurt": { displayName: "Yogurt" },
-  Chicken: { displayName: "Chicken" },
-  Eggs: { displayName: "Eggs" },
-  Bread: { displayName: "Bread" },
-  Muffins: { displayName: "Muffins" },
-  Bananas: { displayName: "Bananas" },
-  Avocados: { displayName: "Avocados" },
+  Dairy: {
+    accent: "dairy",
+    icon: "Milk",
+    label: "Cold case staples",
+    fallback: "/products/dairy.svg",
+  },
+  Meat: {
+    accent: "meat",
+    icon: "Meat",
+    label: "Fresh cuts and proteins",
+    fallback: "/products/meat.svg",
+  },
+  Vegetables: {
+    accent: "vegetable",
+    icon: "Veg",
+    label: "Everyday vegetables",
+    fallback: "/products/vegetables.svg",
+  },
+  "Leafy Greens": {
+    accent: "leafy",
+    icon: "Leaf",
+    label: "Greens and herbs",
+    fallback: "/products/leafy-greens.svg",
+  },
+  Bakery: {
+    accent: "bakery",
+    icon: "Bake",
+    label: "Bakery counter",
+    fallback: "/products/bakery.svg",
+  },
+  "Bread/Wheat": {
+    accent: "bread",
+    icon: "Bread",
+    label: "Breads and wheat staples",
+    fallback: "/products/bread-wheat.svg",
+  },
+  "Produce/Fruits": {
+    accent: "produce",
+    icon: "Fruit",
+    label: "Fruit and ripeness-sensitive items",
+    fallback: "/products/produce-fruits.svg",
+  },
 };
 
 const statusClass = {
@@ -65,12 +91,25 @@ const statusClass = {
   IMPOSSIBLE: "impossible",
 };
 
+function slugify(value) {
+  return value.toLowerCase().replace(/&/g, "and").replace(/%/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function imageForProduct(product, categoryVisual) {
+  const imageUrl = product.image_url || "";
+  if (!imageUrl || imageUrl.includes("source.unsplash.com")) {
+    return `/products/${slugify(product.name)}.svg`;
+  }
+  return imageUrl;
+}
+
 function App() {
   const [view, setView] = React.useState("shop");
   const [demoMode, setDemoMode] = React.useState("Customer View");
   const [customers, setCustomers] = React.useState([]);
   const [products, setProducts] = React.useState([]);
   const [categories, setCategories] = React.useState([]);
+  const [selectedCatalogCategory, setSelectedCatalogCategory] = React.useState("All");
   const [ripenessOptions, setRipenessOptions] = React.useState({});
   const [substitutionOptions, setSubstitutionOptions] = React.useState([]);
   const [fulfillmentStates, setFulfillmentStates] = React.useState([]);
@@ -119,7 +158,7 @@ function App() {
         setRipenessOptions(ripenessData);
         setSubstitutionOptions(substitutionData);
         setFulfillmentStates(fulfillmentData);
-        const milk = productData.find((product) => product.name === "Milk");
+        const milk = productData.find((product) => product.name === "Whole Milk" || product.name === "Milk");
         setForm((current) => ({ ...current, product_id: milk?.id || "" }));
       },
     );
@@ -463,8 +502,11 @@ function App() {
           activeProfile={activeProfile}
           addToCart={addToCart}
           cart={cart}
+          categories={categories}
           products={products}
           productsById={productsById}
+          selectedCatalogCategory={selectedCatalogCategory}
+          setSelectedCatalogCategory={setSelectedCatalogCategory}
           setPreferenceFromProduct={setPreferenceFromProduct}
           retailPartner={orderContext.retail_partner}
           updateCartQuantity={updateCartQuantity}
@@ -519,12 +561,20 @@ function ShoppingHome({
   activeProfile,
   addToCart,
   cart,
+  categories,
   products,
   productsById,
   retailPartner,
+  selectedCatalogCategory,
+  setSelectedCatalogCategory,
   setPreferenceFromProduct,
   updateCartQuantity,
 }) {
+  const shownProducts =
+    selectedCatalogCategory === "All"
+      ? products
+      : products.filter((product) => product.category === selectedCatalogCategory);
+
   return (
     <div className="shopping-layout">
       <section className="product-market">
@@ -533,11 +583,18 @@ function ShoppingHome({
             <p className="eyebrow">Shopping home</p>
             <h2>{retailPartner} grocery catalog</h2>
           </div>
-          <span>{activeProfile?.name} profile active</span>
+          <span>
+            {activeProfile?.name} profile - {shownProducts.length} items
+          </span>
         </div>
-        <CategoryOverview products={products} />
+        <CategoryOverview
+          activeCategory={selectedCatalogCategory}
+          categories={categories}
+          onCategorySelect={setSelectedCatalogCategory}
+          products={products}
+        />
         <div className="product-grid">
-          {products.map((product) => (
+          {shownProducts.map((product) => (
             <ProductCard
               addToCart={addToCart}
               key={product.id}
@@ -545,6 +602,9 @@ function ShoppingHome({
               setPreferenceFromProduct={setPreferenceFromProduct}
             />
           ))}
+          {shownProducts.length === 0 && (
+            <p className="empty-state">No products in this category yet.</p>
+          )}
         </div>
       </section>
 
@@ -558,17 +618,40 @@ function ShoppingHome({
   );
 }
 
-function CategoryOverview({ products }) {
-  const categories = Object.keys(categoryVisuals).map((category) => ({
+function CategoryOverview({ activeCategory, categories, onCategorySelect, products }) {
+  const categoryNames = categories.length ? categories : Object.keys(categoryVisuals);
+  const categoryItems = categoryNames.map((category) => ({
     category,
     count: products.filter((product) => product.category === category).length,
-    ...categoryVisuals[category],
+    ...(categoryVisuals[category] || {
+      accent: "default",
+      icon: "Item",
+      label: "Grocery items",
+    }),
   }));
 
   return (
     <div className="category-overview" aria-label="Grocery categories">
-      {categories.map((item) => (
-        <article className="category-tile" key={item.category}>
+      <button
+        className={activeCategory === "All" ? "category-tile active" : "category-tile"}
+        onClick={() => onCategorySelect("All")}
+        type="button"
+      >
+        <div className="category-icon default" aria-hidden="true">
+          All
+        </div>
+        <div>
+          <strong>All Groceries</strong>
+          <span>{products.length} items - full catalog</span>
+        </div>
+      </button>
+      {categoryItems.map((item) => (
+        <button
+          className={activeCategory === item.category ? "category-tile active" : "category-tile"}
+          key={item.category}
+          onClick={() => onCategorySelect(item.category)}
+          type="button"
+        >
           <div className={`category-icon ${item.accent}`} aria-hidden="true">
             {item.icon}
           </div>
@@ -578,7 +661,7 @@ function CategoryOverview({ products }) {
               {item.count} items - {item.label}
             </span>
           </div>
-        </article>
+        </button>
       ))}
     </div>
   );
@@ -589,14 +672,22 @@ function ProductCard({ addToCart, product, setPreferenceFromProduct }) {
     accent: "default",
     icon: "Grocery",
     label: "Grocery item",
+    fallback: "/products/grocery.svg",
   };
-  const productVisual = productVisuals[product.name] || { displayName: product.name };
+  const imageUrl = imageForProduct(product, categoryVisual);
 
   return (
     <article className="product-card">
       <div className={`product-media ${categoryVisual.accent}`}>
-        <span className="media-icon">{categoryVisual.icon}</span>
-        <small>{productVisual.displayName}</small>
+        <img
+          alt={`${product.name} grocery item`}
+          loading="lazy"
+          onError={(event) => {
+            event.currentTarget.onerror = null;
+            event.currentTarget.src = categoryVisual.fallback;
+          }}
+          src={imageUrl}
+        />
       </div>
       <div className="product-copy">
         <div>

@@ -27,7 +27,15 @@ from .schemas import (
 from .seed import seed_database
 from .shelf_life_engine import evaluate_shelf_life
 
-CATEGORIES = ["Dairy", "Meat", "Bread/Wheat", "Bakery", "Produce"]
+CATEGORIES = [
+    "Dairy",
+    "Meat",
+    "Vegetables",
+    "Leafy Greens",
+    "Bakery",
+    "Bread/Wheat",
+    "Produce/Fruits",
+]
 SUBSTITUTION_PREFERENCES = [
     "Allow replacement",
     "Ask before replacing",
