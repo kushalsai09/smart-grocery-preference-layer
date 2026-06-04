@@ -1,12 +1,14 @@
 # Grocery Preference Layer: Retail-Agnostic Freshness Intelligence for Grocery Fulfillment
 
-Grocery Preference Layer is a full-stack retail technology prototype that helps grocery subscription and delivery platforms capture customer freshness, ripeness, shelf-life, and substitution preferences before fulfillment begins.
+Grocery Preference Layer is a full-stack retail technology prototype inspired by a real grocery delivery experience: receiving items that technically matched the order, but did not match freshness expectations.
 
-The product is designed as a retailer-agnostic preference layer that could support grocery delivery subscriptions, warehouse clubs, marketplace shoppers, or in-house store fulfillment teams.
+The core idea is simple: customers are not always available to message a picker while an order is being fulfilled, so the product captures freshness, ripeness, shelf-life, and substitution preferences before fulfillment starts. It is designed as a retailer-agnostic preference layer for grocery delivery subscriptions, warehouse clubs, marketplace shoppers, or in-house store fulfillment teams.
 
 ## Why I Built This
 
-I started this project after a real grocery delivery experience where I received items that did not match my freshness expectations, such as short-expiry dairy and produce that was too ripe. I realized that customers are not always available to message the picker while the order is being fulfilled, so I wanted to explore how grocery platforms could capture freshness and substitution preferences before fulfillment begins.
+I built this project after experiencing a common grocery delivery problem firsthand. Some delivered items did not match what I expected in terms of freshness or remaining shelf life, and by the time the order was being picked, there was no reliable way to communicate every preference in real time.
+
+That experience made the product opportunity clear: grocery platforms should not depend on customers being available at the exact moment a picker has a question. A better system would let customers define freshness, ripeness, shelf-life, and substitution preferences ahead of time, then turn those preferences into clear guidance for fulfillment teams.
 
 ## Product Summary
 
@@ -243,4 +245,6 @@ IMPOSSIBLE -> Low
 
 ## Portfolio Positioning
 
-This project demonstrates full-stack product thinking across customer experience, fulfillment operations, and product management analytics. It is intended to show how a technical prototype can connect a real customer pain point to operational workflows and measurable business outcomes.
+This project is meant to show how I approach product development from a real customer pain point, not just from a technical feature list. It starts with a familiar grocery delivery frustration, translates that experience into a product opportunity, and then connects the customer workflow to fulfillment operations and product-management metrics.
+
+For recruiters, it demonstrates full-stack execution with React, FastAPI, SQLite, and a rule-based Python engine. For product managers and retail technology teams, it demonstrates how a focused preference layer could reduce ambiguity during fulfillment, improve customer trust, and create a clearer story around freshness compliance, substitutions, and satisfaction.
