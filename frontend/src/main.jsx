@@ -40,15 +40,23 @@ const groceryProfiles = [
   },
 ];
 
+const categoryVisuals = {
+  Dairy: { accent: "dairy", icon: "Milk", label: "Cold case" },
+  Meat: { accent: "meat", icon: "Meat", label: "Fresh cut" },
+  "Bread/Wheat": { accent: "bread", icon: "Bread", label: "Bakery aisle" },
+  Bakery: { accent: "bakery", icon: "Muffin", label: "Baked goods" },
+  Produce: { accent: "produce", icon: "Leaf", label: "Fresh produce" },
+};
+
 const productVisuals = {
-  Milk: { accent: "dairy", shortName: "Milk" },
-  "Greek Yogurt": { accent: "dairy", shortName: "Yogurt" },
-  Chicken: { accent: "meat", shortName: "Chicken" },
-  Eggs: { accent: "dairy", shortName: "Eggs" },
-  Bread: { accent: "bread", shortName: "Bread" },
-  Muffins: { accent: "bakery", shortName: "Muffin" },
-  Bananas: { accent: "produce", shortName: "Banana" },
-  Avocados: { accent: "produce", shortName: "Avocado" },
+  Milk: { displayName: "Milk" },
+  "Greek Yogurt": { displayName: "Yogurt" },
+  Chicken: { displayName: "Chicken" },
+  Eggs: { displayName: "Eggs" },
+  Bread: { displayName: "Bread" },
+  Muffins: { displayName: "Muffins" },
+  Bananas: { displayName: "Bananas" },
+  Avocados: { displayName: "Avocados" },
 };
 
 const statusClass = {
@@ -527,6 +535,7 @@ function ShoppingHome({
           </div>
           <span>{activeProfile?.name} profile active</span>
         </div>
+        <CategoryOverview products={products} />
         <div className="product-grid">
           {products.map((product) => (
             <ProductCard
@@ -549,16 +558,45 @@ function ShoppingHome({
   );
 }
 
+function CategoryOverview({ products }) {
+  const categories = Object.keys(categoryVisuals).map((category) => ({
+    category,
+    count: products.filter((product) => product.category === category).length,
+    ...categoryVisuals[category],
+  }));
+
+  return (
+    <div className="category-overview" aria-label="Grocery categories">
+      {categories.map((item) => (
+        <article className="category-tile" key={item.category}>
+          <div className={`category-icon ${item.accent}`} aria-hidden="true">
+            {item.icon}
+          </div>
+          <div>
+            <strong>{item.category}</strong>
+            <span>
+              {item.count} items - {item.label}
+            </span>
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 function ProductCard({ addToCart, product, setPreferenceFromProduct }) {
-  const visual = productVisuals[product.name] || {
+  const categoryVisual = categoryVisuals[product.category] || {
     accent: "default",
-    shortName: product.name.slice(0, 5),
+    icon: "Grocery",
+    label: "Grocery item",
   };
+  const productVisual = productVisuals[product.name] || { displayName: product.name };
 
   return (
     <article className="product-card">
-      <div className={`product-media ${visual.accent}`}>
-        <span>{visual.shortName}</span>
+      <div className={`product-media ${categoryVisual.accent}`}>
+        <span className="media-icon">{categoryVisual.icon}</span>
+        <small>{productVisual.displayName}</small>
       </div>
       <div className="product-copy">
         <div>

@@ -378,6 +378,48 @@ textarea {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
+.category-overview {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  margin-bottom: 18px;
+}
+
+.category-tile {
+  align-items: center;
+  background: #f8faf5;
+  border: 1px solid #d8dfd0;
+  border-radius: 8px;
+  display: flex;
+  gap: 10px;
+  min-height: 76px;
+  padding: 12px;
+}
+
+.category-tile strong,
+.category-tile span {
+  display: block;
+}
+
+.category-tile span {
+  color: #65717a;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+.category-icon {
+  align-items: center;
+  border-radius: 8px;
+  display: flex;
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-weight: 950;
+  height: 44px;
+  justify-content: center;
+  width: 54px;
+}
+
 .product-card {
   animation: card-rise 420ms ease both;
   border: 1px solid #d8dfd0;
@@ -403,7 +445,10 @@ textarea {
 .product-media {
   align-items: center;
   border-radius: 8px;
+  color: #17212b;
   display: flex;
+  flex-direction: column;
+  gap: 8px;
   height: 132px;
   justify-content: center;
   overflow: hidden;
@@ -430,8 +475,8 @@ textarea {
 }
 
 .product-media span {
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.94);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.96);
   border-radius: 999px;
   color: #17212b;
   font-weight: 950;
@@ -440,6 +485,23 @@ textarea {
   z-index: 1;
 }
 
+.product-media small {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 999px;
+  color: #3f4c55;
+  font-size: 0.76rem;
+  font-weight: 900;
+  padding: 4px 9px;
+  position: relative;
+  z-index: 1;
+}
+
+.media-icon {
+  min-width: 74px;
+  text-align: center;
+}
+
+.category-icon.dairy,
 .product-media.dairy {
   background: #dcecf7;
 }
@@ -452,6 +514,7 @@ textarea {
   background: #9fc7df;
 }
 
+.category-icon.meat,
 .product-media.meat {
   background: #f6ded9;
 }
@@ -464,6 +527,8 @@ textarea {
   background: #a9362d;
 }
 
+.category-icon.bread,
+.category-icon.bakery,
 .product-media.bread,
 .product-media.bakery {
   background: #f8e5bc;
@@ -479,6 +544,7 @@ textarea {
   background: #9b5d25;
 }
 
+.category-icon.produce,
 .product-media.produce {
   background: #e3efd6;
 }
