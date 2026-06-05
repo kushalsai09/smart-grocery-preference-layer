@@ -41,7 +41,7 @@ Store pickers then receive clear alerts and fulfillment workflow states. Product
 
 ## Key Features
 
-- **Customer Freshness Preferences**: Save minimum shelf-life expectations for dairy, meat, bread/wheat, bakery, and produce.
+- **Customer Freshness Preferences**: Save minimum shelf-life expectations for Dairy, Meat, Vegetables, Leafy Greens, Bakery, Bread/Wheat, and Produce/Fruits.
 - **Produce Ripeness Preferences**: Configure ripeness for bananas and avocados.
 - **Substitution Preferences**: Choose Allow replacement, Ask before replacing, or Do not replace.
 - **Cart**: Cart items are stored in the FastAPI + SQLite backend.
@@ -106,6 +106,7 @@ smart-grocery-preference-layer/
 - SQLite persistence
 - Product catalog seed data
 - Product prices and package sizes stored in backend
+- Local non-branded SVG grocery visuals for stable product card demos
 - Persisted cart
 - Persisted preferences
 - Persisted order context
