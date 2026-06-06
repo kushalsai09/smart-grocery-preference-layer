@@ -5,8 +5,15 @@ from sqlite3 import Connection, Row
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+from .backup_rules import (
+    CATEGORY_HELPER_TEXT,
+    build_backup_instructions,
+)
 from .database import get_connection, get_db, init_schema
 from .schemas import (
+    BackupRuleOut,
+    BackupRuleSettings,
+    BackupRuleUpdate,
     CartItemCreate,
     CartItemOut,
     CartItemUpdate,
@@ -27,15 +34,7 @@ from .schemas import (
 from .seed import seed_database
 from .shelf_life_engine import evaluate_shelf_life
 
-CATEGORIES = [
-    "Dairy",
-    "Meat",
-    "Vegetables",
-    "Leafy Greens",
-    "Bakery",
-    "Bread/Wheat",
-    "Produce/Fruits",
-]
+CATEGORIES = list(CATEGORY_HELPER_TEXT)
 SUBSTITUTION_PREFERENCES = [
     "Allow replacement",
     "Ask before replacing",
@@ -131,6 +130,58 @@ def row_to_product(row: Row | dict) -> dict:
     return row_to_dict(row) if isinstance(row, Row) else dict(row)
 
 
+def serialize_backup_rule(
+    row: Row | dict,
+    *,
+    source: str,
+    product: dict | None = None,
+) -> dict:
+    rule = row_to_dict(row) if isinstance(row, Row) else dict(row)
+    if product:
+        rule["category"] = product["category"]
+        rule["product_id"] = product["id"]
+        rule["product_name"] = product["name"]
+    else:
+        rule["product_id"] = None
+        rule["product_name"] = None
+
+    rule["source"] = source
+    rule["helper_text"] = CATEGORY_HELPER_TEXT[rule["category"]]
+    rule["instructions"] = build_backup_instructions(rule)
+    return rule
+
+
+def get_applied_backup_rule(
+    db: Connection,
+    customer_id: int,
+    product: dict,
+) -> dict | None:
+    override = db.execute(
+        """
+        SELECT * FROM product_backup_rules
+        WHERE customer_id = ? AND product_id = ?
+        """,
+        (customer_id, product["id"]),
+    ).fetchone()
+    if override:
+        return serialize_backup_rule(
+            override,
+            source="Product override",
+            product=product,
+        )
+
+    category_rule = db.execute(
+        """
+        SELECT * FROM backup_rules
+        WHERE customer_id = ? AND category = ?
+        """,
+        (customer_id, product["category"]),
+    ).fetchone()
+    if category_rule:
+        return serialize_backup_rule(category_rule, source="Category default")
+    return None
+
+
 def build_cart_item(db: Connection, cart_row: Row) -> dict:
     item = row_to_dict(cart_row)
     product = get_product_or_404(db, item["product_id"])
@@ -145,6 +196,11 @@ def build_cart_item(db: Connection, cart_row: Row) -> dict:
     item["freshness_confidence"] = confidence
     item["substitution_preference"] = (
         preference["substitution_preference"] if preference else "Ask before replacing"
+    )
+    item["applied_backup_rule"] = get_applied_backup_rule(
+        db,
+        item["customer_id"],
+        product,
     )
     return item
 
@@ -276,6 +332,172 @@ def get_customers(db: Connection = Depends(get_db)) -> list[dict]:
 def get_products(db: Connection = Depends(get_db)) -> list[dict]:
     rows = db.execute("SELECT * FROM products ORDER BY category, name").fetchall()
     return [row_to_dict(row) for row in rows]
+
+
+@app.get(
+    "/api/customers/{customer_id}/backup-rules",
+    response_model=list[BackupRuleOut],
+)
+def get_backup_rules(
+    customer_id: int,
+    db: Connection = Depends(get_db),
+) -> list[dict]:
+    rows = db.execute(
+        """
+        SELECT * FROM backup_rules
+        WHERE customer_id = ?
+        ORDER BY id
+        """,
+        (customer_id,),
+    ).fetchall()
+    return [
+        serialize_backup_rule(row, source="Category default")
+        for row in rows
+    ]
+
+
+@app.put(
+    "/api/customers/{customer_id}/backup-rules",
+    response_model=BackupRuleOut,
+)
+def update_backup_rule(
+    customer_id: int,
+    payload: BackupRuleUpdate,
+    db: Connection = Depends(get_db),
+) -> dict:
+    if payload.category not in CATEGORIES:
+        raise HTTPException(status_code=400, detail="Unknown category")
+
+    now = datetime.now(UTC).isoformat()
+    db.execute(
+        """
+        INSERT INTO backup_rules (
+            customer_id,
+            category,
+            same_item_freshest_available,
+            same_item_different_size,
+            organic_or_premium_allowed,
+            max_price_increase,
+            similar_item_same_category,
+            reduce_quantity_allowed,
+            skip_if_no_approved_option,
+            updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(customer_id, category) DO UPDATE SET
+            same_item_freshest_available = excluded.same_item_freshest_available,
+            same_item_different_size = excluded.same_item_different_size,
+            organic_or_premium_allowed = excluded.organic_or_premium_allowed,
+            max_price_increase = excluded.max_price_increase,
+            similar_item_same_category = excluded.similar_item_same_category,
+            reduce_quantity_allowed = excluded.reduce_quantity_allowed,
+            skip_if_no_approved_option = excluded.skip_if_no_approved_option,
+            updated_at = excluded.updated_at
+        """,
+        (
+            customer_id,
+            payload.category,
+            payload.same_item_freshest_available,
+            payload.same_item_different_size,
+            payload.organic_or_premium_allowed,
+            payload.max_price_increase,
+            payload.similar_item_same_category,
+            payload.reduce_quantity_allowed,
+            payload.skip_if_no_approved_option,
+            now,
+        ),
+    )
+    db.commit()
+    row = db.execute(
+        """
+        SELECT * FROM backup_rules
+        WHERE customer_id = ? AND category = ?
+        """,
+        (customer_id, payload.category),
+    ).fetchone()
+    return serialize_backup_rule(row, source="Category default")
+
+
+@app.put(
+    "/api/customers/{customer_id}/products/{product_id}/backup-rule",
+    response_model=BackupRuleOut,
+)
+def update_product_backup_rule(
+    customer_id: int,
+    product_id: int,
+    payload: BackupRuleSettings,
+    db: Connection = Depends(get_db),
+) -> dict:
+    product = get_product_or_404(db, product_id)
+    now = datetime.now(UTC).isoformat()
+    db.execute(
+        """
+        INSERT INTO product_backup_rules (
+            customer_id,
+            product_id,
+            same_item_freshest_available,
+            same_item_different_size,
+            organic_or_premium_allowed,
+            max_price_increase,
+            similar_item_same_category,
+            reduce_quantity_allowed,
+            skip_if_no_approved_option,
+            updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(customer_id, product_id) DO UPDATE SET
+            same_item_freshest_available = excluded.same_item_freshest_available,
+            same_item_different_size = excluded.same_item_different_size,
+            organic_or_premium_allowed = excluded.organic_or_premium_allowed,
+            max_price_increase = excluded.max_price_increase,
+            similar_item_same_category = excluded.similar_item_same_category,
+            reduce_quantity_allowed = excluded.reduce_quantity_allowed,
+            skip_if_no_approved_option = excluded.skip_if_no_approved_option,
+            updated_at = excluded.updated_at
+        """,
+        (
+            customer_id,
+            product_id,
+            payload.same_item_freshest_available,
+            payload.same_item_different_size,
+            payload.organic_or_premium_allowed,
+            payload.max_price_increase,
+            payload.similar_item_same_category,
+            payload.reduce_quantity_allowed,
+            payload.skip_if_no_approved_option,
+            now,
+        ),
+    )
+    db.commit()
+    row = db.execute(
+        """
+        SELECT * FROM product_backup_rules
+        WHERE customer_id = ? AND product_id = ?
+        """,
+        (customer_id, product_id),
+    ).fetchone()
+    return serialize_backup_rule(
+        row,
+        source="Product override",
+        product=product,
+    )
+
+
+@app.delete("/api/customers/{customer_id}/products/{product_id}/backup-rule")
+def delete_product_backup_rule(
+    customer_id: int,
+    product_id: int,
+    db: Connection = Depends(get_db),
+) -> dict[str, str]:
+    db.execute(
+        """
+        DELETE FROM product_backup_rules
+        WHERE customer_id = ? AND product_id = ?
+        """,
+        (customer_id, product_id),
+    )
+    db.commit()
+    return {"status": "deleted"}
 
 
 @app.post("/api/engine/check", response_model=ShelfLifeCheckResponse)
@@ -528,6 +750,11 @@ def get_order_review(
         "grocery_profile": context["grocery_profile"],
         "selected_items": cart["items"],
         "preferences": preferences,
+        "applied_backup_rules": [
+            item["applied_backup_rule"]
+            for item in cart["items"]
+            if item["applied_backup_rule"]
+        ],
         "estimated_total": cart["estimated_total"],
     }
 

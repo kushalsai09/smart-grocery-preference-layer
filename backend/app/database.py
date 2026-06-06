@@ -62,6 +62,36 @@ def init_schema() -> None:
                 grocery_profile TEXT NOT NULL DEFAULT 'Weekly Groceries',
                 updated_at TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS backup_rules (
+                id INTEGER PRIMARY KEY,
+                customer_id INTEGER NOT NULL,
+                category TEXT NOT NULL,
+                same_item_freshest_available INTEGER NOT NULL DEFAULT 1,
+                same_item_different_size INTEGER NOT NULL DEFAULT 1,
+                organic_or_premium_allowed INTEGER NOT NULL DEFAULT 0,
+                max_price_increase INTEGER NOT NULL DEFAULT 2,
+                similar_item_same_category INTEGER NOT NULL DEFAULT 0,
+                reduce_quantity_allowed INTEGER NOT NULL DEFAULT 1,
+                skip_if_no_approved_option INTEGER NOT NULL DEFAULT 1,
+                updated_at TEXT NOT NULL,
+                UNIQUE(customer_id, category)
+            );
+
+            CREATE TABLE IF NOT EXISTS product_backup_rules (
+                id INTEGER PRIMARY KEY,
+                customer_id INTEGER NOT NULL,
+                product_id INTEGER NOT NULL,
+                same_item_freshest_available INTEGER NOT NULL DEFAULT 1,
+                same_item_different_size INTEGER NOT NULL DEFAULT 1,
+                organic_or_premium_allowed INTEGER NOT NULL DEFAULT 0,
+                max_price_increase INTEGER NOT NULL DEFAULT 2,
+                similar_item_same_category INTEGER NOT NULL DEFAULT 0,
+                reduce_quantity_allowed INTEGER NOT NULL DEFAULT 1,
+                skip_if_no_approved_option INTEGER NOT NULL DEFAULT 1,
+                updated_at TEXT NOT NULL,
+                UNIQUE(customer_id, product_id)
+            );
             """
         )
         ensure_column(db, "products", "sample_price", "REAL NOT NULL DEFAULT 0")

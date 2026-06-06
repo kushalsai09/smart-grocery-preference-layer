@@ -10,6 +10,8 @@ import {
   Minus,
   Plus,
   RefreshCw,
+  RotateCcw,
+  ShieldCheck,
   ShoppingCart,
   SlidersHorizontal,
   Sparkles,
@@ -103,6 +105,19 @@ function imageForProduct(product, categoryVisual) {
   return imageUrl;
 }
 
+function toBackupRulePayload(rule, includeCategory) {
+  const payload = {
+    same_item_freshest_available: rule.same_item_freshest_available,
+    same_item_different_size: rule.same_item_different_size,
+    organic_or_premium_allowed: rule.organic_or_premium_allowed,
+    max_price_increase: Number(rule.max_price_increase),
+    similar_item_same_category: rule.similar_item_same_category,
+    reduce_quantity_allowed: rule.reduce_quantity_allowed,
+    skip_if_no_approved_option: rule.skip_if_no_approved_option,
+  };
+  return includeCategory ? { category: rule.category, ...payload } : payload;
+}
+
 function App() {
   const [view, setView] = React.useState("shop");
   const [demoMode, setDemoMode] = React.useState("Customer View");
@@ -121,6 +136,7 @@ function App() {
   const [cart, setCart] = React.useState({ items: [], estimated_total: 0 });
   const [orderReview, setOrderReview] = React.useState(null);
   const [preferences, setPreferences] = React.useState([]);
+  const [backupRules, setBackupRules] = React.useState([]);
   const [alerts, setAlerts] = React.useState([]);
   const [recommendations, setRecommendations] = React.useState([]);
   const [engineResult, setEngineResult] = React.useState(null);
@@ -209,6 +225,7 @@ function App() {
       preferenceData,
       alertData,
       recommendationData,
+      backupRuleData,
       contextData,
       cartData,
       reviewData,
@@ -216,6 +233,7 @@ function App() {
       fetchJson(`/api/customers/${customerId}/preferences`),
       fetchJson(`/api/store-picker/customers/${customerId}/alerts`),
       fetchJson(`/api/customers/${customerId}/suggestions`),
+      fetchJson(`/api/customers/${customerId}/backup-rules`),
       fetchJson(`/api/customers/${customerId}/order-context`),
       fetchJson(`/api/customers/${customerId}/cart`),
       fetchJson(`/api/customers/${customerId}/order-review`),
@@ -223,6 +241,7 @@ function App() {
     setPreferences(preferenceData);
     setAlerts(alertData);
     setRecommendations(recommendationData);
+    setBackupRules(backupRuleData);
     setOrderContext(contextData);
     setCart(cartData);
     setOrderReview(reviewData);
@@ -266,6 +285,33 @@ function App() {
       method: "PATCH",
       body: JSON.stringify({ fulfillment_state: fulfillmentState }),
     });
+    await refreshCustomerData(selectedCustomerId);
+  }
+
+  async function saveBackupRule(rule) {
+    await fetchJson(`/api/customers/${selectedCustomerId}/backup-rules`, {
+      method: "PUT",
+      body: JSON.stringify(toBackupRulePayload(rule, true)),
+    });
+    await refreshCustomerData(selectedCustomerId);
+  }
+
+  async function saveProductBackupRule(productId, rule) {
+    await fetchJson(
+      `/api/customers/${selectedCustomerId}/products/${productId}/backup-rule`,
+      {
+        method: "PUT",
+        body: JSON.stringify(toBackupRulePayload(rule, false)),
+      },
+    );
+    await refreshCustomerData(selectedCustomerId);
+  }
+
+  async function removeProductBackupRule(productId) {
+    await fetchJson(
+      `/api/customers/${selectedCustomerId}/products/${productId}/backup-rule`,
+      { method: "DELETE" },
+    );
     await refreshCustomerData(selectedCustomerId);
   }
 
@@ -469,6 +515,15 @@ function App() {
           Preferences
         </button>
         <button
+          className={view === "backup-rules" ? "active" : ""}
+          onClick={() => {
+            setDemoMode("Customer View");
+            setView("backup-rules");
+          }}
+        >
+          Backup Rules
+        </button>
+        <button
           className={view === "review" ? "active" : ""}
           onClick={() => {
             setDemoMode("Customer View");
@@ -532,8 +587,20 @@ function App() {
         />
       )}
 
+      {view === "backup-rules" && (
+        <BackupRulesPage
+          backupRules={backupRules}
+          customerName={customers.find((customer) => customer.id === selectedCustomerId)?.name}
+          saveBackupRule={saveBackupRule}
+        />
+      )}
+
       {view === "review" && (
-        <OrderReview orderReview={orderReview} productsById={productsById} />
+        <OrderReview
+          orderReview={orderReview}
+          removeProductBackupRule={removeProductBackupRule}
+          saveProductBackupRule={saveProductBackupRule}
+        />
       )}
 
       {view === "store-picker" && (
@@ -967,7 +1034,208 @@ function PreferenceCenter({
   );
 }
 
-function OrderReview({ orderReview }) {
+function BackupRuleFields({ draft, onChange }) {
+  const toggle = (field) => (event) =>
+    onChange((current) => ({ ...current, [field]: event.target.checked }));
+
+  return (
+    <div className="backup-rule-fields">
+      <label className="checkbox-row">
+        <input
+          checked={draft.same_item_freshest_available}
+          onChange={toggle("same_item_freshest_available")}
+          type="checkbox"
+        />
+        Use the freshest available version of the same item
+      </label>
+      <label className="checkbox-row">
+        <input
+          checked={draft.same_item_different_size}
+          onChange={toggle("same_item_different_size")}
+          type="checkbox"
+        />
+        Allow a different package size
+      </label>
+      <label className="checkbox-row">
+        <input
+          checked={draft.organic_or_premium_allowed}
+          onChange={toggle("organic_or_premium_allowed")}
+          type="checkbox"
+        />
+        Allow an organic or premium version
+      </label>
+      <label>
+        Maximum price increase
+        <select
+          value={draft.max_price_increase}
+          onChange={(event) =>
+            onChange((current) => ({
+              ...current,
+              max_price_increase: Number(event.target.value),
+            }))
+          }
+        >
+          {[0, 1, 2, 5].map((amount) => (
+            <option key={amount} value={amount}>
+              ${amount}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="checkbox-row">
+        <input
+          checked={draft.similar_item_same_category}
+          onChange={toggle("similar_item_same_category")}
+          type="checkbox"
+        />
+        Allow a similar item in the same category
+      </label>
+      <label className="checkbox-row">
+        <input
+          checked={draft.reduce_quantity_allowed}
+          onChange={toggle("reduce_quantity_allowed")}
+          type="checkbox"
+        />
+        Allow a smaller quantity
+      </label>
+      <label className="checkbox-row">
+        <input
+          checked={draft.skip_if_no_approved_option}
+          onChange={toggle("skip_if_no_approved_option")}
+          type="checkbox"
+        />
+        Skip the item when no approved option is available
+      </label>
+    </div>
+  );
+}
+
+function BackupRuleCard({ rule, saveBackupRule }) {
+  const [draft, setDraft] = React.useState(rule);
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  React.useEffect(() => setDraft(rule), [rule]);
+
+  async function handleSave() {
+    setIsSaving(true);
+    try {
+      await saveBackupRule(draft);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <article className="backup-rule-card">
+      <div className="backup-rule-heading">
+        <div>
+          <span className="category-pill">{rule.category}</span>
+          <h3>{rule.category} backups</h3>
+          <p>{rule.helper_text}</p>
+        </div>
+        <ShieldCheck />
+      </div>
+      <BackupRuleFields draft={draft} onChange={setDraft} />
+      <button className="primary-button" disabled={isSaving} onClick={handleSave}>
+        {isSaving ? "Saving..." : "Save rule"}
+      </button>
+    </article>
+  );
+}
+
+function BackupRulesPage({ backupRules, customerName, saveBackupRule }) {
+  return (
+    <div className="backup-rules-layout">
+      <section className="panel wide-panel backup-rules-intro">
+        <div className="panel-title">
+          <ShieldCheck />
+          <h2>Backup Rules</h2>
+        </div>
+        <p>
+          Save these once to {customerName || "the customer"}'s profile. They will be reused for
+          future orders, so the picker can follow approved choices without waiting for a reply.
+        </p>
+        <div className="workflow-line" aria-label="Backup rule workflow">
+          <span>Add groceries</span>
+          <span>Set preferences</span>
+          <span>Saved backup rules apply</span>
+          <span>Review order</span>
+          <span>Picker follows rules</span>
+        </div>
+      </section>
+
+      {backupRules.length === 0 ? (
+        <section className="panel wide-panel">
+          <p className="empty-state">Loading saved backup rules...</p>
+        </section>
+      ) : (
+        <section className="backup-rule-grid wide-panel">
+          {backupRules.map((rule) => (
+            <BackupRuleCard
+              key={rule.category}
+              rule={rule}
+              saveBackupRule={saveBackupRule}
+            />
+          ))}
+        </section>
+      )}
+    </div>
+  );
+}
+
+function ProductBackupRuleEditor({ onCancel, onRemove, onSave, rule }) {
+  const [draft, setDraft] = React.useState(rule);
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  async function handleSave() {
+    setIsSaving(true);
+    try {
+      await onSave(rule.product_id, draft);
+      onCancel();
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleRemove() {
+    setIsSaving(true);
+    try {
+      await onRemove(rule.product_id);
+      onCancel();
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <div className="product-backup-editor">
+      <p>Customize this item only. The saved category rule remains available for future items.</p>
+      <BackupRuleFields draft={draft} onChange={setDraft} />
+      <div className="inline-actions">
+        <button className="primary-button" disabled={isSaving} onClick={handleSave}>
+          {isSaving ? "Saving..." : "Save item override"}
+        </button>
+        {rule.source === "Product override" && (
+          <button className="ghost-button" disabled={isSaving} onClick={handleRemove}>
+            <RotateCcw size={16} />
+            Use category rule
+          </button>
+        )}
+        <button className="ghost-button" disabled={isSaving} onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function OrderReview({
+  orderReview,
+  removeProductBackupRule,
+  saveProductBackupRule,
+}) {
+  const [customizingProductId, setCustomizingProductId] = React.useState(null);
+
   if (!orderReview) {
     return (
       <section className="panel">
@@ -1048,6 +1316,57 @@ function OrderReview({ orderReview }) {
           ))}
         </div>
       </section>
+
+      <section className="panel wide-panel">
+        <div className="section-heading compact">
+          <div>
+            <p className="eyebrow">Saved to customer profile</p>
+            <h2>Backup Rules Applied</h2>
+          </div>
+          <span>{orderReview.applied_backup_rules.length} items covered</span>
+        </div>
+        {orderReview.applied_backup_rules.length === 0 ? (
+          <p className="empty-state">Add cart items to see their saved backup rules.</p>
+        ) : (
+          <div className="backup-applied-list">
+            {orderReview.applied_backup_rules.map((rule) => (
+              <article className="backup-applied-item" key={rule.product_id}>
+                <div className="backup-applied-heading">
+                  <div>
+                    <span className="category-pill">{rule.category}</span>
+                    <h3>{rule.product_name}</h3>
+                    <small>{rule.source}</small>
+                  </div>
+                  <button
+                    className="ghost-button"
+                    onClick={() =>
+                      setCustomizingProductId(
+                        customizingProductId === rule.product_id ? null : rule.product_id,
+                      )
+                    }
+                  >
+                    <SlidersHorizontal size={16} />
+                    Customize item
+                  </button>
+                </div>
+                <ul className="instruction-list">
+                  {rule.instructions.map((instruction) => (
+                    <li key={instruction}>{instruction}</li>
+                  ))}
+                </ul>
+                {customizingProductId === rule.product_id && (
+                  <ProductBackupRuleEditor
+                    onCancel={() => setCustomizingProductId(null)}
+                    onRemove={removeProductBackupRule}
+                    onSave={saveProductBackupRule}
+                    rule={rule}
+                  />
+                )}
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
@@ -1084,6 +1403,17 @@ function StorePickerDashboard({
                   <p>
                     Qty {item.quantity} - {item.substitution_preference}
                   </p>
+                  {item.applied_backup_rule && (
+                    <div className="picker-backup">
+                      <strong>Approved backup instructions</strong>
+                      <small>{item.applied_backup_rule.source}</small>
+                      <ul className="instruction-list">
+                        {item.applied_backup_rule.instructions.map((instruction) => (
+                          <li key={instruction}>{instruction}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
                 <label>
                   Workflow state

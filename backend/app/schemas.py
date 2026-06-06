@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -79,6 +81,32 @@ class FulfillmentStateUpdate(BaseModel):
     fulfillment_state: str
 
 
+class BackupRuleSettings(BaseModel):
+    same_item_freshest_available: bool = True
+    same_item_different_size: bool = True
+    organic_or_premium_allowed: bool = False
+    max_price_increase: Literal[0, 1, 2, 5] = 2
+    similar_item_same_category: bool = False
+    reduce_quantity_allowed: bool = True
+    skip_if_no_approved_option: bool = True
+
+
+class BackupRuleUpdate(BackupRuleSettings):
+    category: str
+
+
+class BackupRuleOut(BackupRuleSettings):
+    id: int
+    customer_id: int
+    category: str
+    product_id: int | None = None
+    product_name: str | None = None
+    source: str
+    helper_text: str
+    instructions: list[str]
+    updated_at: str
+
+
 class CartItemOut(BaseModel):
     id: int
     customer_id: int
@@ -92,6 +120,7 @@ class CartItemOut(BaseModel):
     shelf_life_status: str | None = None
     freshness_confidence: str | None = None
     substitution_preference: str | None = None
+    applied_backup_rule: BackupRuleOut | None = None
 
 
 class CartOut(BaseModel):
@@ -116,4 +145,5 @@ class OrderReviewOut(BaseModel):
     grocery_profile: str
     selected_items: list[CartItemOut]
     preferences: list[PreferenceOut]
+    applied_backup_rules: list[BackupRuleOut]
     estimated_total: float

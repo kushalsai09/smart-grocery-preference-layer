@@ -1,6 +1,8 @@
 from datetime import UTC, datetime
 from sqlite3 import Connection
 
+from .backup_rules import CATEGORY_HELPER_TEXT, DEFAULT_BACKUP_RULE
+
 
 CUSTOMERS = [
     {"id": 1, "name": "Maya Patel"},
@@ -669,6 +671,39 @@ def seed_database(db: Connection) -> None:
         row["name"]: row["id"] for row in db.execute("SELECT id, name FROM products")
     }
     now = datetime.now(UTC).isoformat()
+
+    for customer in CUSTOMERS:
+        for category in CATEGORY_HELPER_TEXT:
+            db.execute(
+                """
+                INSERT INTO backup_rules (
+                    customer_id,
+                    category,
+                    same_item_freshest_available,
+                    same_item_different_size,
+                    organic_or_premium_allowed,
+                    max_price_increase,
+                    similar_item_same_category,
+                    reduce_quantity_allowed,
+                    skip_if_no_approved_option,
+                    updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(customer_id, category) DO NOTHING
+                """,
+                (
+                    customer["id"],
+                    category,
+                    DEFAULT_BACKUP_RULE["same_item_freshest_available"],
+                    DEFAULT_BACKUP_RULE["same_item_different_size"],
+                    DEFAULT_BACKUP_RULE["organic_or_premium_allowed"],
+                    DEFAULT_BACKUP_RULE["max_price_increase"],
+                    DEFAULT_BACKUP_RULE["similar_item_same_category"],
+                    DEFAULT_BACKUP_RULE["reduce_quantity_allowed"],
+                    DEFAULT_BACKUP_RULE["skip_if_no_approved_option"],
+                    now,
+                ),
+            )
 
     if db.execute("SELECT id FROM preferences LIMIT 1").fetchone():
         db.commit()

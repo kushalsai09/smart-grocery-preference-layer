@@ -334,6 +334,11 @@ textarea {
   grid-template-columns: minmax(0, 1fr) 330px;
 }
 
+.backup-rules-layout {
+  display: grid;
+  gap: 18px;
+}
+
 .store-picker-layout {
   display: grid;
   gap: 18px;
@@ -722,6 +727,153 @@ textarea {
   display: grid;
   gap: 12px;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.backup-rules-intro p {
+  color: #52606d;
+  line-height: 1.55;
+  margin-bottom: 16px;
+  max-width: 780px;
+}
+
+.workflow-line {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.workflow-line span {
+  align-items: center;
+  background: #f0f5eb;
+  border: 1px solid #d8dfd0;
+  border-radius: 6px;
+  color: #36523f;
+  display: flex;
+  font-size: 0.78rem;
+  font-weight: 850;
+  justify-content: center;
+  min-height: 48px;
+  padding: 8px;
+  text-align: center;
+}
+
+.backup-rule-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.backup-rule-card {
+  align-content: start;
+  background: #ffffff;
+  border: 1px solid #d8dfd0;
+  border-radius: 8px;
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+}
+
+.backup-rule-heading,
+.backup-applied-heading {
+  align-items: flex-start;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.backup-rule-heading p {
+  color: #65717a;
+  line-height: 1.4;
+  margin-bottom: 0;
+}
+
+.backup-rule-heading svg {
+  color: #2f6d48;
+  flex: 0 0 auto;
+}
+
+.backup-rule-fields {
+  display: grid;
+  gap: 11px;
+}
+
+.backup-rule-fields > label:not(.checkbox-row) {
+  max-width: 220px;
+}
+
+.backup-rule-fields .checkbox-row {
+  align-items: flex-start;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.backup-rule-card > .primary-button {
+  justify-self: start;
+}
+
+.backup-applied-list {
+  display: grid;
+  gap: 12px;
+}
+
+.backup-applied-item {
+  border: 1px solid #d8dfd0;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.backup-applied-heading small {
+  color: #2f6d48;
+  display: block;
+  font-weight: 800;
+}
+
+.instruction-list {
+  color: #52606d;
+  display: grid;
+  gap: 5px;
+  line-height: 1.4;
+  margin: 12px 0 0;
+  padding-left: 20px;
+}
+
+.product-backup-editor {
+  border-top: 1px solid #d8dfd0;
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
+.product-backup-editor > p {
+  color: #65717a;
+  line-height: 1.45;
+}
+
+.inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.picker-backup {
+  background: #f3f7ef;
+  border-left: 3px solid #2f6d48;
+  margin-top: 14px;
+  padding: 12px;
+}
+
+.picker-backup > strong,
+.picker-backup > small {
+  display: block;
+}
+
+.picker-backup > small {
+  color: #65717a;
+  margin-top: 3px;
+}
+
+.picker-backup .instruction-list {
+  font-size: 0.82rem;
 }
 
 .preference-card,
@@ -1153,6 +1305,7 @@ textarea {
   .shopping-layout,
   .preference-layout,
   .review-layout,
+  .backup-rules-layout,
   .pm-dashboard,
   .store-picker-layout {
     grid-template-columns: 1fr;
@@ -1199,7 +1352,9 @@ textarea {
 
   .demo-mode-toggle,
   .metric-grid,
-  .chart-grid {
+  .chart-grid,
+  .backup-rule-grid,
+  .workflow-line {
     grid-template-columns: 1fr;
   }
 
@@ -1214,6 +1369,8 @@ textarea {
 
   .product-copy,
   .alert-header,
+  .backup-applied-heading,
+  .backup-rule-heading,
   .fulfillment-card,
   .cart-total {
     align-items: flex-start;
