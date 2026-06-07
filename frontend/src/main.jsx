@@ -449,16 +449,17 @@ function App() {
         <div className="hero-content">
           <div>
             <p className="eyebrow">Grocery fulfillment preferences</p>
-            <h1>Show how grocery preference data improves fulfillment outcomes.</h1>
+            <h1>Groceries picked the way you would pick them.</h1>
             <p className="subtitle">
-              A practical way to capture customer preferences, guide store picking, and review fulfillment insights.
+              Save freshness preferences, ripeness choices, and pre-approved backup rules before checkout, so store
+              pickers can make better decisions without waiting for real-time replies.
             </p>
             <div className="hero-actions">
               <button className="primary-button" onClick={() => setView("shop")}>
-                Browse groceries
+                Start shopping
               </button>
               <button className="secondary-button" onClick={() => selectDemoMode("Product Manager View")}>
-                View insights
+                View picker flow
               </button>
             </div>
           </div>
