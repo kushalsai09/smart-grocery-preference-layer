@@ -212,6 +212,41 @@ textarea {
   color: #26333b;
 }
 
+.api-status-banner {
+  align-items: flex-start;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  border-radius: 8px;
+  color: #7c2d12;
+  display: flex;
+  gap: 12px;
+  margin: 18px 0;
+  padding: 14px 16px;
+}
+
+.api-status-banner svg {
+  flex: 0 0 auto;
+  height: 22px;
+  margin-top: 2px;
+  width: 22px;
+}
+
+.api-status-banner strong,
+.api-status-banner p,
+.api-status-banner small {
+  display: block;
+}
+
+.api-status-banner p {
+  color: #7c2d12;
+  margin: 4px 0;
+}
+
+.api-status-banner small {
+  color: #9a3412;
+  overflow-wrap: anywhere;
+}
+
 .hero-cart {
   background: #ffffff;
   border: 1px solid #d8dfd0;

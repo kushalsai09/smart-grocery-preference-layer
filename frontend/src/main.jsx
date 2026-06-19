@@ -21,7 +21,7 @@ import {
 
 import "./styles.css";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/$/, "");
 
 const retailPartners = ["Grocery Preference Layer", "ClubHub", "ValueGrocer", "LocalMarket"];
 const groceryProfiles = [
@@ -140,6 +140,7 @@ function App() {
   const [alerts, setAlerts] = React.useState([]);
   const [recommendations, setRecommendations] = React.useState([]);
   const [engineResult, setEngineResult] = React.useState(null);
+  const [loadError, setLoadError] = React.useState("");
   const [isSaving, setIsSaving] = React.useState(false);
   const [form, setForm] = React.useState({
     category: "Dairy",
@@ -152,6 +153,7 @@ function App() {
   });
 
   React.useEffect(() => {
+    setLoadError("");
     Promise.all([
       fetchJson("/api/customers"),
       fetchJson("/api/products"),
@@ -177,12 +179,16 @@ function App() {
         const milk = productData.find((product) => product.name === "Whole Milk" || product.name === "Milk");
         setForm((current) => ({ ...current, product_id: milk?.id || "" }));
       },
-    );
+    ).catch((error) => {
+      setLoadError(error.message);
+    });
   }, []);
 
   React.useEffect(() => {
     if (!selectedCustomerId) return;
-    refreshCustomerData(selectedCustomerId);
+    refreshCustomerData(selectedCustomerId).catch((error) => {
+      setLoadError(error.message);
+    });
   }, [selectedCustomerId]);
 
   const productsById = React.useMemo(
@@ -208,13 +214,19 @@ function App() {
   );
 
   async function fetchJson(path, options) {
-    const response = await fetch(`${API_BASE}${path}`, {
-      headers: { "Content-Type": "application/json" },
-      ...options,
-    });
+    let response;
+
+    try {
+      response = await fetch(`${API_BASE}${path}`, {
+        headers: { "Content-Type": "application/json" },
+        ...options,
+      });
+    } catch (error) {
+      throw new Error(`Could not reach the backend at ${API_BASE}. Check VITE_API_BASE_URL in Vercel and CORS in Render.`);
+    }
 
     if (!response.ok) {
-      throw new Error(`Request failed: ${response.status}`);
+      throw new Error(`Backend request failed: ${response.status} ${response.statusText}`);
     }
 
     return response.json();
@@ -248,71 +260,106 @@ function App() {
   }
 
   async function updateOrderContext(nextContext) {
-    const updated = await fetchJson(`/api/customers/${selectedCustomerId}/order-context`, {
-      method: "PUT",
-      body: JSON.stringify(nextContext),
-    });
-    setOrderContext(updated);
-    await refreshCustomerData(selectedCustomerId);
+    try {
+      setLoadError("");
+      const updated = await fetchJson(`/api/customers/${selectedCustomerId}/order-context`, {
+        method: "PUT",
+        body: JSON.stringify(nextContext),
+      });
+      setOrderContext(updated);
+      await refreshCustomerData(selectedCustomerId);
+    } catch (error) {
+      setLoadError(error.message);
+    }
   }
 
   async function addToCart(productId) {
-    await fetchJson("/api/cart/items", {
-      method: "POST",
-      body: JSON.stringify({
-        customer_id: Number(selectedCustomerId),
-        product_id: productId,
-        quantity: 1,
-      }),
-    });
-    await refreshCustomerData(selectedCustomerId);
+    try {
+      setLoadError("");
+      await fetchJson("/api/cart/items", {
+        method: "POST",
+        body: JSON.stringify({
+          customer_id: Number(selectedCustomerId),
+          product_id: productId,
+          quantity: 1,
+        }),
+      });
+      await refreshCustomerData(selectedCustomerId);
+    } catch (error) {
+      setLoadError(error.message);
+    }
   }
 
   async function updateCartQuantity(item, nextQuantity) {
-    if (nextQuantity <= 0) {
-      await fetchJson(`/api/cart/items/${item.id}`, { method: "DELETE" });
-    } else {
-      await fetchJson(`/api/cart/items/${item.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ quantity: nextQuantity }),
-      });
+    try {
+      setLoadError("");
+      if (nextQuantity <= 0) {
+        await fetchJson(`/api/cart/items/${item.id}`, { method: "DELETE" });
+      } else {
+        await fetchJson(`/api/cart/items/${item.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ quantity: nextQuantity }),
+        });
+      }
+      await refreshCustomerData(selectedCustomerId);
+    } catch (error) {
+      setLoadError(error.message);
     }
-    await refreshCustomerData(selectedCustomerId);
   }
 
   async function updateFulfillmentState(cartItemId, fulfillmentState) {
-    await fetchJson(`/api/cart/items/${cartItemId}/fulfillment`, {
-      method: "PATCH",
-      body: JSON.stringify({ fulfillment_state: fulfillmentState }),
-    });
-    await refreshCustomerData(selectedCustomerId);
+    try {
+      setLoadError("");
+      await fetchJson(`/api/cart/items/${cartItemId}/fulfillment`, {
+        method: "PATCH",
+        body: JSON.stringify({ fulfillment_state: fulfillmentState }),
+      });
+      await refreshCustomerData(selectedCustomerId);
+    } catch (error) {
+      setLoadError(error.message);
+    }
   }
 
   async function saveBackupRule(rule) {
-    await fetchJson(`/api/customers/${selectedCustomerId}/backup-rules`, {
-      method: "PUT",
-      body: JSON.stringify(toBackupRulePayload(rule, true)),
-    });
-    await refreshCustomerData(selectedCustomerId);
+    try {
+      setLoadError("");
+      await fetchJson(`/api/customers/${selectedCustomerId}/backup-rules`, {
+        method: "PUT",
+        body: JSON.stringify(toBackupRulePayload(rule, true)),
+      });
+      await refreshCustomerData(selectedCustomerId);
+    } catch (error) {
+      setLoadError(error.message);
+    }
   }
 
   async function saveProductBackupRule(productId, rule) {
-    await fetchJson(
-      `/api/customers/${selectedCustomerId}/products/${productId}/backup-rule`,
-      {
-        method: "PUT",
-        body: JSON.stringify(toBackupRulePayload(rule, false)),
-      },
-    );
-    await refreshCustomerData(selectedCustomerId);
+    try {
+      setLoadError("");
+      await fetchJson(
+        `/api/customers/${selectedCustomerId}/products/${productId}/backup-rule`,
+        {
+          method: "PUT",
+          body: JSON.stringify(toBackupRulePayload(rule, false)),
+        },
+      );
+      await refreshCustomerData(selectedCustomerId);
+    } catch (error) {
+      setLoadError(error.message);
+    }
   }
 
   async function removeProductBackupRule(productId) {
-    await fetchJson(
-      `/api/customers/${selectedCustomerId}/products/${productId}/backup-rule`,
-      { method: "DELETE" },
-    );
-    await refreshCustomerData(selectedCustomerId);
+    try {
+      setLoadError("");
+      await fetchJson(
+        `/api/customers/${selectedCustomerId}/products/${productId}/backup-rule`,
+        { method: "DELETE" },
+      );
+      await refreshCustomerData(selectedCustomerId);
+    } catch (error) {
+      setLoadError(error.message);
+    }
   }
 
   function setPreferenceFromProduct(product) {
@@ -367,6 +414,7 @@ function App() {
     event.preventDefault();
     setIsSaving(true);
     setEngineResult(null);
+    setLoadError("");
 
     const payload = {
       customer_id: Number(selectedCustomerId),
@@ -398,6 +446,8 @@ function App() {
       });
       await refreshCustomerData(selectedCustomerId);
       setForm((current) => ({ ...current, notes: "" }));
+    } catch (error) {
+      setLoadError(error.message);
     } finally {
       setIsSaving(false);
     }
@@ -469,6 +519,8 @@ function App() {
           />
         </div>
       </header>
+
+      {loadError && <ApiStatusBanner apiBase={API_BASE} message={loadError} />}
 
       <section className="profile-strip" aria-label="Grocery profiles">
         {groceryProfiles.map((profile) => (
@@ -622,6 +674,19 @@ function App() {
         />
       )}
     </main>
+  );
+}
+
+function ApiStatusBanner({ apiBase, message }) {
+  return (
+    <section className="api-status-banner" role="alert">
+      <AlertTriangle />
+      <div>
+        <strong>Backend connection needs attention</strong>
+        <p>{message}</p>
+        <small>Current API base: {apiBase}</small>
+      </div>
+    </section>
   );
 }
 

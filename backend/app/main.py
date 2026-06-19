@@ -1,5 +1,6 @@
 from collections import Counter
 from datetime import UTC, datetime
+import os
 from sqlite3 import Connection, Row
 
 from fastapi import Depends, FastAPI, HTTPException
@@ -48,15 +49,28 @@ RIPENESS_OPTIONS = {
     "Avocados": ["firm", "medium", "ripe"],
 }
 
+DEFAULT_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://smart-grocery-preference-layer.vercel.app",
+]
+
+
+def get_allowed_origins() -> list[str]:
+    configured_origins = os.getenv("FRONTEND_ORIGINS", "")
+    origins = [
+        origin.strip().rstrip("/")
+        for origin in configured_origins.split(",")
+        if origin.strip()
+    ]
+    return origins or DEFAULT_ALLOWED_ORIGINS
+
+
 app = FastAPI(title="Smart Grocery Preference Assistant")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "https://smart-grocery-preference-layer.vercel.app",
-    ],
+    allow_origins=get_allowed_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

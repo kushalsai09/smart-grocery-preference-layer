@@ -168,6 +168,30 @@ Frontend app:
 http://localhost:5173
 ```
 
+## Deployment Notes
+
+The production app is designed to run with:
+
+- **Frontend**: Vercel
+- **Backend**: Render
+
+Set this environment variable in Vercel:
+
+```text
+VITE_API_BASE_URL=https://your-render-backend-url.onrender.com
+```
+
+Set these environment variables in Render:
+
+```text
+FRONTEND_ORIGINS=https://your-vercel-frontend-url.vercel.app
+DATABASE_PATH=/var/data/smart_grocery.db
+```
+
+`FRONTEND_ORIGINS` can contain multiple comma-separated origins if you also use Vercel preview URLs or a custom domain.
+
+The demo uses SQLite. For cart and preference data to survive Render restarts or redeploys, configure a Render persistent disk and point `DATABASE_PATH` to a path on that disk.
+
 ## Demo Workflow
 
 ### 1. Customer View
@@ -241,7 +265,6 @@ IMPOSSIBLE -> Low
 - Add complaint, refund, and satisfaction tracking
 - Add automated backend and frontend tests
 - Split frontend into reusable component files
-- Add deployment configuration
 - Add CI/CD checks
 
 ## What This Project Shows
